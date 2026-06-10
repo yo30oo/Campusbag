@@ -1,0 +1,6 @@
+{
+  "name": "캠백",
+  "description": "대학생들을 위한 전공 교재 및 수업 교구·준비물 매칭형 교내 안전 중고거래 플랫폼",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

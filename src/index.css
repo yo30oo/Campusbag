@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans KR", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Natural Tones palette overrides */
+  --color-emerald-50: #F1F4EE;
+  --color-emerald-100: #E2EBD9;
+  --color-emerald-200: #C2D5B4;
+  --color-emerald-300: #A5BF91;
+  --color-emerald-400: #889E73;
+  --color-emerald-500: #889E73;
+  --color-emerald-600: #71885b;
+  --color-emerald-700: #4a5d3b;
+  --color-emerald-800: #2d3a22;
+  --color-emerald-900: #1c2615;
+  --color-emerald-950: #10170a;
+
+  --color-indigo-950: #10170a;
+
+  --color-slate-50: #FAF8F5;
+  --color-slate-100: #F3F1ED;
+  --color-slate-200: #E8E4DE;
+  --color-slate-250: #DFDAD3;
+  --color-slate-300: #D5CFC7;
+  --color-slate-400: #A09B93;
+  --color-slate-500: #706B63;
+  --color-slate-600: #55514B;
+  --color-slate-700: #3D3D3D;
+  --color-slate-800: #2C2925;
+  --color-slate-900: #1B1917;
+
+  --color-amber-50: #FDF2F0;
+  --color-amber-100: #F7E0DA;
+  --color-amber-200: #E6BEAE;
+  --color-amber-300: #E6BEAE;
+  --color-amber-400: #D69F8C;
+  --color-amber-500: #E6BEAE;
+  --color-amber-600: #D69F8C;
+  --color-amber-700: #B5745E;
+  --color-amber-800: #8b5e4a;
+  --color-amber-900: #5a3d2f;
+
+  --color-blue-50: #EEF2F6;
+  --color-blue-100: #DAE3EC;
+  --color-blue-500: #7F99B1;
+  --color-blue-600: #5E7A96;
+}
+
+/* Custom styles for high-fidelity interactive map or calendar */
+.scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+.scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Base body style for academic eco-themed color palette */
+body {
+  background-color: #FAF8F5;
+  color: #3D3D3D;
+  font-family: var(--font-sans);
+}
+
+/* Pulse keyframes for simulated notifications button */
+@keyframes ring-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+.animate-ring-pulse {
+  animation: ring-pulse 2s infinite ease-in-out;
+}
