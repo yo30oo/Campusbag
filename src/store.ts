@@ -114,14 +114,39 @@ export class CambagStore {
 
   static getCurrentUser(): UniversityAccount {
     const accounts = this.getAccounts();
-    const storedUid = localStorage.getItem('cambag_current_uid') || 'user_test';
-    const user = accounts.find(a => a.uid === storedUid);
+    const storedUid = localStorage.getItem('cambag_current_uid') || 'user_guest';
+    let user = accounts.find(a => a.uid === storedUid);
+    if (!user && storedUid === 'user_guest') {
+      return {
+        uid: 'user_guest',
+        name: '비회원',
+        dept: '미인증 게스트',
+        studentId: '',
+        email: '',
+        verified: false,
+        contact: '',
+        point: 0
+      };
+    }
     if (user) return user;
-    return accounts[2] || INITIAL_ACCOUNTS[2]; // Default to user_test (Hong Gildong)
+    return {
+      uid: 'user_guest',
+      name: '비회원',
+      dept: '미인증 게스트',
+      studentId: '',
+      email: '',
+      verified: false,
+      contact: '',
+      point: 0
+    };
   }
 
   static setCurrentUser(uid: string): void {
-    localStorage.setItem('cambag_current_uid', uid);
+    if (!uid) {
+      localStorage.removeItem('cambag_current_uid');
+    } else {
+      localStorage.setItem('cambag_current_uid', uid);
+    }
     window.dispatchEvent(new Event('cambag_state_change'));
   }
 

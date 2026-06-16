@@ -45,6 +45,8 @@ export default function RoleSimulator() {
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
+
   useEffect(() => {
     const loadState = () => {
       setAccounts(CambagStore.getAccounts());
@@ -176,154 +178,231 @@ export default function RoleSimulator() {
 
   return (
     <>
-      {/* Simulation Helper Bar on Top representing the Platform Scope */}
-      <div id="role-simulator-bar" className="bg-slate-900 text-slate-100 border-b border-slate-800 py-3 px-4 z-40 sticky top-0 shadow-md">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      {/* 🔴 Production University Authentication & Notification Center Bar */}
+      <div id="role-simulator-bar" className="bg-slate-950 text-slate-100 border-b border-slate-900 py-3.5 px-4 z-40 sticky top-0 shadow-lg">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 font-sans">
           
+          {/* Left info status based on authorization state */}
           <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <p className="text-xs font-mono tracking-wider text-slate-400">
-              [캠백 데모 시뮬레이터] 
-            </p>
-            <p className="text-xs text-slate-200 hidden sm:inline-block">
-              신청-수락 매칭 과정 체험을 위해 자유롭게 역할을 교대해 보세요.
-            </p>
+            {currentUser && currentUser.uid !== 'user_guest' ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <p className="text-xs text-slate-300">
+                  <strong className="text-emerald-405 font-bold font-sans text-emerald-400">{currentUser.name} 학우님</strong> 로그인 중 ({currentUser.dept}) 
+                  {currentUser.verified ? (
+                    <span className="ml-2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm">
+                      대학 공식 인증회원 ✓
+                    </span>
+                  ) : (
+                    <span className="ml-2 bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm">
+                      임시 미인증 준회원
+                    </span>
+                  )}
+                </p>
+                <div className="h-3.5 w-[1px] bg-slate-800 hidden md:block mx-1"></div>
+                <p className="text-xs text-slate-400 hidden sm:inline-block">
+                  신용 마일리지: <strong className="text-amber-400 font-mono font-bold">{currentUser.point} POINT</strong>
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 relative">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-600"></span>
+                </span>
+                <p className="text-xs text-slate-400">
+                  ⚠️ <strong className="text-slate-350 text-slate-300">비회원 손님 모드</strong>입니다. 장터 양도물품 글쓰기 및 교내 직거래 신청을 위해 로그인해 주세요.
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* Right action control set */}
           <div className="flex items-center flex-wrap gap-2 text-xs">
-            <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-              {accounts.map(acc => {
-                const isActive = currentUser?.uid === acc.uid;
-                return (
-                  <button
-                    key={acc.uid}
-                    onClick={() => handleRoleToggle(acc.uid)}
-                    className={`px-3 py-1.5 rounded-md font-medium transition-all flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                    }`}
-                  >
-                    <UserCheck className="w-3 h-3" />
-                    <span>{acc.name}</span>
-                    <span className="text-[10px] opacity-75 hidden lg:inline">
-                      ({acc.uid === 'user_kim' ? '판매 전문' : acc.uid === 'user_lee' ? '선배' : '미인증'})
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            {!currentUser || currentUser.uid === 'user_guest' ? (
+              <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthError('');
+                    setShowAuthModal('register');
+                  }}
+                  className="px-3 py-1.5 text-[11px] text-emerald-400 font-extrabold hover:text-white hover:bg-emerald-950/60 rounded-md transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <UserPlus className="w-3 h-3" />
+                  <span>진짜 가입하기</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthError('');
+                    setShowAuthModal('login');
+                  }}
+                  className="px-3 py-1.5 text-[11px] text-indigo-300 font-extrabold hover:text-white hover:bg-slate-800/80 rounded-md transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <LogIn className="w-3 h-3" />
+                  <span>실명 로그인</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    CambagStore.setCurrentUser('user_guest');
+                    showToast('로그아웃 완료', '안전하게 로그아웃되어 비회원(구경하기) 모드로 전환되었습니다.');
+                  }}
+                  className="px-3 py-1.5 text-[11px] text-slate-400 font-bold hover:text-white hover:bg-slate-800 rounded-md transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <span>로그아웃</span>
+                </button>
+              </div>
+            )}
 
-            {/* Real Serverside Authentication Controls */}
-            <div className="h-4 w-[1px] bg-slate-800 hidden md:block"></div>
-            
-            <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthError('');
-                  setShowAuthModal('register');
-                }}
-                className="px-2.5 py-1 text-[11px] text-emerald-400 font-extrabold hover:text-white hover:bg-emerald-900/40 rounded transition-all flex items-center gap-1"
-                title="실제 학생 계정 가입"
-              >
-                <UserPlus className="w-3 h-3" />
-                <span>진짜 가입하기</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthError('');
-                  setShowAuthModal('login');
-                }}
-                className="px-2.5 py-1 text-[11px] text-indigo-300 font-extrabold hover:text-white hover:bg-slate-700/50 rounded transition-all flex items-center gap-1"
-                title="실제 계정 로그인"
-              >
-                <LogIn className="w-3 h-3" />
-                <span>로그인</span>
-              </button>
-            </div>
-
+            {/* Subtle administrative switcher utility trigger */}
             <button
-              onClick={handleReset}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-400 hover:text-slate-200 rounded-md transition-colors"
-              title="데이터 초기화"
+              onClick={() => setShowDemoPanel(!showDemoPanel)}
+              className={`p-1.5 rounded-md border transition-all text-xs flex items-center gap-1 cursor-pointer ${
+                showDemoPanel 
+                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' 
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200'
+              }`}
+              title="데모 교대 및 테스트 피쳐 사용"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className={`w-3.5 h-3.5 ${showDemoPanel ? 'animate-spin' : ''}`} />
+              <span className="hidden lg:inline text-[10px]">데모 교대툴</span>
             </button>
 
             {/* Kakao Announcement Bell */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setShowNotificationTray(!showNotificationTray);
-                  markAllAsRead();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg select-none transition-all ${
-                  unreadCount > 0
-                    ? 'bg-amber-500 text-slate-950 font-bold animate-ring-pulse duration-700'
-                    : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                <BellDot className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">알림톡 ({unreadCount})</span>
-                <span className="sm:hidden">{unreadCount}</span>
-              </button>
+            {currentUser && currentUser.uid !== 'user_guest' && (
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowNotificationTray(!showNotificationTray);
+                    markAllAsRead();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg select-none transition-all cursor-pointer ${
+                    unreadCount > 0
+                      ? 'bg-amber-500 text-slate-950 font-bold animate-ring-pulse duration-700'
+                      : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <BellDot className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">알림톡 ({unreadCount})</span>
+                  <span className="sm:hidden">{unreadCount}</span>
+                </button>
 
-              {/* Notification Tray Dropdown */}
-              <AnimatePresence>
-                {showNotificationTray && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-slate-200 shadow-2xl rounded-xl z-50 text-slate-800 overflow-hidden"
-                  >
-                    <div className="bg-amber-400 p-3 flex justify-between items-center text-slate-950 font-bold">
-                      <div className="flex items-center gap-2">
-                        <img src="https://t1.daumcdn.net/cfile/tistory/252CFB3954E20B8D07" className="w-5 h-5 rounded-md shadow-sm" alt="Kakao" />
-                        <span className="text-sm">캠백 비즈니스 알림톡</span>
-                      </div>
-                      <button onClick={() => setShowNotificationTray(false)} className="hover:bg-amber-500/50 p-1 rounded">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
-                      {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400 text-xs">
-                          현재 신분({currentUser?.name})에게 도착한 알림이 없습니다.
+                {/* Notification Tray Dropdown */}
+                <AnimatePresence>
+                  {showNotificationTray && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-80 md:w-96 bg-white border border-slate-200 shadow-2xl rounded-xl z-50 text-slate-800 overflow-hidden"
+                    >
+                      <div className="bg-amber-400 p-3 flex justify-between items-center text-slate-950 font-bold">
+                        <div className="flex items-center gap-2">
+                          <img src="https://t1.daumcdn.net/cfile/tistory/252CFB3954E20B8D07" className="w-5 h-5 rounded-md shadow-sm" alt="Kakao" />
+                          <span className="text-sm font-sans font-bold">캠백 비즈니스 알림톡</span>
                         </div>
-                      ) : (
-                        notifications.map(noti => (
-                          <div key={noti.id} className={`p-4 hover:bg-slate-50 transition-colors text-xs ${!noti.read ? 'bg-amber-50/40 font-semibold' : ''}`}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${
-                                noti.type === 'kakao' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'
-                              }`}>
-                                {noti.type === 'kakao' ? '알림톡 발송' : '캠퍼스 시스템'}
-                              </span>
-                              <span className="text-[10px] text-slate-400">
-                                {new Date(noti.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                            <h4 className="font-bold text-slate-800 text-sm mb-1">{noti.title}</h4>
-                            <p className="text-slate-600 leading-relaxed font-normal whitespace-pre-line">{noti.message}</p>
+                        <button onClick={() => setShowNotificationTray(false)} className="hover:bg-amber-500/50 p-1 rounded">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-slate-400 text-xs font-normal">
+                            현재 수신된 알림톡 카드가 존재하지 않습니다.
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                        ) : (
+                          notifications.map(noti => (
+                            <div key={noti.id} className={`p-4 hover:bg-slate-50 transition-colors text-xs ${!noti.read ? 'bg-amber-50/40 font-semibold' : ''}`}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${
+                                  noti.type === 'kakao' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-800'
+                                }`}>
+                                  {noti.type === 'kakao' ? '알림톡 발송' : '캠퍼스 시스템'}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {new Date(noti.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-slate-800 text-sm mb-1">{noti.title}</h4>
+                              <p className="text-slate-600 leading-relaxed font-normal whitespace-pre-line">{noti.message}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
           </div>
         </div>
       </div>
+
+      {/* 🛠️ Dropdown Demo Multi-Role Dashboard shown ONLY when showDemoPanel toggled */}
+      <AnimatePresence>
+        {showDemoPanel && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-slate-900 text-slate-200 border-b border-slate-950 text-xs overflow-hidden z-30 font-sans"
+          >
+            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3.5">
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-400 text-slate-950 font-extrabold text-[9px] px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                  지정 대역 검수도구
+                </span>
+                <p className="text-[11px] text-slate-300">
+                  직거래 매칭 진행과 전산 알림톡 체험을 테스트하기 위해 세명의 상징 회원으로 간편 교대가 가능합니다.
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2.5">
+                <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                  {accounts.map(acc => {
+                    const isActive = currentUser?.uid === acc.uid;
+                    return (
+                      <button
+                        key={acc.uid}
+                        onClick={() => handleRoleToggle(acc.uid)}
+                        className={`px-2.5 py-1 text-[11px] rounded transition-all font-semibold flex items-center gap-1.5 cursor-pointer ${
+                          isActive
+                            ? 'bg-amber-500 text-slate-950 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <UserCheck className="w-3 h-3" />
+                        <span>{acc.name}</span>
+                        <span className="text-[9px] opacity-75 hidden lg:inline">
+                          ({acc.get ? '인증' : acc.uid === 'user_kim' ? '판매' : acc.uid === 'user_lee' ? '선배' : '미인증'})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={handleReset}
+                  className="p-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-820 hover:border-slate-700 text-red-400 hover:text-red-350 rounded-md transition-colors font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+                  title="서버 데이터 리셋"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>데이터 리셋</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Real Serverside Authentication Overlay Modals */}
       <AnimatePresence>

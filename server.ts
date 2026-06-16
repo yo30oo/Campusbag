@@ -6,15 +6,41 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
+import fs from 'fs';
 
 // In-Memory Database containing initial data
 import { INITIAL_LISTINGS, INITIAL_OFFERS, INITIAL_ACCOUNTS, INITIAL_NOTIFICATIONS } from './src/mockData';
 import { Listing, TradeOffer, UniversityAccount, Notification } from './src/types';
 
-let listings: Listing[] = JSON.parse(JSON.stringify(INITIAL_LISTINGS));
-let offers: TradeOffer[] = JSON.parse(JSON.stringify(INITIAL_OFFERS));
-let accounts: UniversityAccount[] = JSON.parse(JSON.stringify(INITIAL_ACCOUNTS));
-let notifications: Notification[] = JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS));
+const LISTINGS_FILE = path.join(process.cwd(), 'current_listings.json');
+const OFFERS_FILE = path.join(process.cwd(), 'current_offers.json');
+const ACCOUNTS_FILE = path.join(process.cwd(), 'current_accounts.json');
+const NOTIFICATIONS_FILE = path.join(process.cwd(), 'current_notifications.json');
+
+function loadJSON<T>(filePath: string, fallback: T): T {
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(data) as T;
+    }
+  } catch (err) {
+    console.warn(`Failed to load ${filePath}:`, err);
+  }
+  return fallback;
+}
+
+function saveJSON<T>(filePath: string, data: T) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error(`Failed to save ${filePath}:`, err);
+  }
+}
+
+let listings: Listing[] = loadJSON(LISTINGS_FILE, JSON.parse(JSON.stringify(INITIAL_LISTINGS)));
+let offers: TradeOffer[] = loadJSON(OFFERS_FILE, JSON.parse(JSON.stringify(INITIAL_OFFERS)));
+let accounts: UniversityAccount[] = loadJSON(ACCOUNTS_FILE, JSON.parse(JSON.stringify(INITIAL_ACCOUNTS)));
+let notifications: Notification[] = loadJSON(NOTIFICATIONS_FILE, JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS)));
 
 const app = express();
 app.use(express.json());
@@ -34,6 +60,7 @@ function createNotification(userId: string, type: 'kakao' | 'system', title: str
     read: false,
   };
   notifications = [newNoti, ...notifications];
+  saveJSON(NOTIFICATIONS_FILE, notifications);
   return newNoti;
 }
 
@@ -42,6 +69,7 @@ function addPointsToAccount(uid: string, value: number) {
   const acc = accounts.find(a => a.uid === uid);
   if (acc) {
     acc.point += value;
+    saveJSON(ACCOUNTS_FILE, accounts);
   }
 }
 
@@ -93,6 +121,8 @@ app.post('/api/listings', (req, res) => {
     });
   }
 
+  saveJSON(LISTINGS_FILE, listings);
+
   res.json({ success: true, data: newListing });
 });
 
@@ -135,6 +165,9 @@ app.post('/api/offers', (req, res) => {
   // Update listing item state
   listing.status = 'matching';
   offers = [newOffer, ...offers];
+
+  saveJSON(LISTINGS_FILE, listings);
+  saveJSON(OFFERS_FILE, offers);
 
   // Send Kakao Alert notification to Seller
   createNotification(
@@ -187,6 +220,9 @@ app.post('/api/offers/accept', (req, res) => {
     );
   }
 
+  saveJSON(LISTINGS_FILE, listings);
+  saveJSON(OFFERS_FILE, offers);
+
   res.json({ success: true, offers, listings, accounts, notifications });
 });
 
@@ -212,6 +248,9 @@ app.post('/api/offers/decline', (req, res) => {
     `제출하신 [${listing?.title || '신청 물품'}]에 대한 매칭 요청이 반려되어 매물이 다시 거래 가능 상태로 전환되었습니다. 다른 신규 매물을 탐색해 보거나 새로운 알림을 기다려 주세요.`,
     offer.listingId
   );
+
+  saveJSON(LISTINGS_FILE, listings);
+  saveJSON(OFFERS_FILE, offers);
 
   res.json({ success: true, offers, listings, notifications });
 });
@@ -246,6 +285,9 @@ app.post('/api/offers/timeout', (req, res) => {
     `요청하신 [${listing?.title || '도서'}]의 24시간 대기 한도가 경과되어 학생 안전 직거래 규칙에 따라 자동 취소되었습니다. 미응답 판매자 경고가 누적 반영됩니다.`,
     offer.listingId
   );
+
+  saveJSON(LISTINGS_FILE, listings);
+  saveJSON(OFFERS_FILE, offers);
 
   res.json({ success: true, offers, listings, notifications });
 });
@@ -286,6 +328,7 @@ app.post('/api/accounts/register', (req, res) => {
   };
 
   accounts.push(newAccount);
+  saveJSON(ACCOUNTS_FILE, accounts);
 
   createNotification(
     uid,
@@ -333,6 +376,8 @@ app.post('/api/accounts/verify', (req, res) => {
   }
   acc.point += 100;
 
+  saveJSON(ACCOUNTS_FILE, accounts);
+
   createNotification(
     uid,
     'system',
@@ -358,6 +403,7 @@ app.post('/api/notifications/read', (req, res) => {
   const noti = notifications.find(n => n.id === notiId);
   if (noti) {
     noti.read = true;
+    saveJSON(NOTIFICATIONS_FILE, notifications);
   }
   res.json({ success: true, notifications });
 });
@@ -367,6 +413,12 @@ app.post('/api/reset', (req, res) => {
   offers = JSON.parse(JSON.stringify(INITIAL_OFFERS));
   accounts = JSON.parse(JSON.stringify(INITIAL_ACCOUNTS));
   notifications = JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS));
+
+  saveJSON(LISTINGS_FILE, listings);
+  saveJSON(OFFERS_FILE, offers);
+  saveJSON(ACCOUNTS_FILE, accounts);
+  saveJSON(NOTIFICATIONS_FILE, notifications);
+
   res.json({ success: true, listings, offers, accounts, notifications });
 });
 
