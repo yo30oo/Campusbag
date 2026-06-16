@@ -251,7 +251,11 @@ app.post('/api/offers/timeout', (req, res) => {
 });
 
 app.get('/api/accounts', (req, res) => {
-  res.json({ success: true, data: accounts });
+  const queryUids = req.query.uids ? (req.query.uids as string).split(',') : [];
+  const defaultUids = ['user_kim', 'user_lee', 'user_test'];
+  const allowedUids = new Set([...defaultUids, ...queryUids]);
+  const filtered = accounts.filter(a => allowedUids.has(a.uid));
+  res.json({ success: true, data: filtered });
 });
 
 app.post('/api/accounts/register', (req, res) => {

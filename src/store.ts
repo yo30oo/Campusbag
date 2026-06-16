@@ -23,15 +23,37 @@ export function setStoredData<T>(key: string, value: T): void {
   }
 }
 
+function getLocalAllowedUids(): string[] {
+  try {
+    const list = localStorage.getItem('cambag_local_allowed_uids');
+    if (list) {
+      return JSON.parse(list);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function addLocalAllowedUid(uid: string): void {
+  try {
+    const uids = getLocalAllowedUids();
+    if (!uids.includes(uid)) {
+      uids.push(uid);
+      localStorage.setItem('cambag_local_allowed_uids', JSON.stringify(uids));
+    }
+  } catch (e) {}
+}
+
 // Global actions to manipulate state with full Node/Express sync backend
 export class CambagStore {
   // Sync all data elements from Express server backend
   static async syncFromServer(): Promise<void> {
     try {
+      const uids = getLocalAllowedUids();
+      const query = uids.length ? `?uids=${uids.join(',')}` : '';
       const [listingsRes, offersRes, accountsRes, notisRes] = await Promise.all([
         fetch('/api/listings').then(res => res.json()),
         fetch('/api/offers').then(res => res.json()),
-        fetch('/api/accounts').then(res => res.json()),
+        fetch(`/api/accounts${query}`).then(res => res.json()),
         fetch('/api/notifications').then(res => res.json()),
       ]);
 
@@ -439,6 +461,7 @@ export class CambagStore {
       });
       const result = await res.json();
       if (result.success) {
+        addLocalAllowedUid(result.data.uid);
         // Fetch fresh accounts on client and update
         await this.syncFromServer();
         // Log them in immediately
@@ -462,6 +485,7 @@ export class CambagStore {
       });
       const result = await res.json();
       if (result.success) {
+        addLocalAllowedUid(result.user.uid);
         this.setCurrentUser(result.user.uid);
         await this.syncFromServer();
         return { success: true, user: result.user };
