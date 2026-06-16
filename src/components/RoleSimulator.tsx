@@ -432,11 +432,11 @@ export default function RoleSimulator() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-500 block">실제 학번 (9자리)</label>
+                      <label className="text-[10px] font-bold text-slate-500 block">실제 학번 (8자리)</label>
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="202210203"
+                          placeholder="20221020"
                           value={regStudentId}
                           onChange={(e) => setRegStudentId(e.target.value)}
                           className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
@@ -506,7 +506,7 @@ export default function RoleSimulator() {
                     <div className="relative">
                       <input
                         type="text"
-                        placeholder="아이디 혹은 학번 9자리를 입력하세요"
+                        placeholder="아이디 혹은 학번 8자리를 입력하세요"
                         value={loginIdentifier}
                         onChange={(e) => setLoginIdentifier(e.target.value)}
                         className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"

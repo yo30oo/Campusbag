@@ -169,10 +169,10 @@ export default function VerificationPanel() {
               
               <div className="space-y-1.5Col">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-800">1. 대학교 소속 학번(9자리)</label>
+                  <label className="font-bold text-slate-800">1. 대학교 소속 학번(8자리)</label>
                   <input
                     type="text"
-                    placeholder="예: 202204104"
+                    placeholder="예: 20220410"
                     required
                     value={studentIdInput}
                     onChange={(e) => setStudentIdInput(e.target.value)}
