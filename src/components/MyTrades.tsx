@@ -6,12 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { TradeOffer, Listing } from '../types';
 import { CambagStore } from '../store';
-import { Check, X, ShieldAlert, BadgeCheck, Phone, HelpCircle, Coins, Clock, ArrowRightLeft, HandHelping, Landmark, CheckCircle } from 'lucide-react';
+import { Check, X, ShieldAlert, BadgeCheck, Phone, HelpCircle, Coins, Clock, ArrowRightLeft, HandHelping, Landmark, CheckCircle, MessageSquare } from 'lucide-react';
+import TradeChatBox from './TradeChatBox';
 
 export default function MyTrades() {
   const [currentUser, setCurrentUser] = useState(CambagStore.getCurrentUser());
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [openChatOfferId, setOpenChatOfferId] = useState<string | null>(null);
 
   const loadData = () => {
     const user = CambagStore.getCurrentUser();
@@ -196,6 +198,33 @@ export default function MyTrades() {
                       </div>
                     )}
 
+                    {/* Toggle Trade Chat talk button */}
+                    {(offer.status === 'accepted' || offer.status === 'pending') && (
+                      <div className="pt-1.5 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setOpenChatOfferId(openChatOfferId === offer.id ? null : offer.id)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            openChatOfferId === offer.id
+                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-2xs'
+                              : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 shadow-3xs'
+                          }`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>{openChatOfferId === offer.id ? '거래톡 닫기' : '실시간 거래톡 열기'}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {openChatOfferId === offer.id && (
+                      <TradeChatBox
+                        offerId={offer.id}
+                        currentUser={currentUser}
+                        otherPartyName={offer.buyerName}
+                        otherPartyDept={offer.buyerDept}
+                      />
+                    )}
+
                     {/* Timeout manual Simulator button */}
                     {offer.status === 'pending' && (
                       <div className="pt-2 border-t border-dashed border-slate-100 flex justify-between items-center text-[9px] text-slate-400">
@@ -285,6 +314,33 @@ export default function MyTrades() {
                       <div className="text-[10px] text-slate-400 text-center font-normal">
                         종료되었습니다. 상대가 반려했거나 다른 학우와 거래가 완료된 상태입니다.
                       </div>
+                    )}
+
+                    {/* Toggle Trade Chat talk button */}
+                    {(offer.status === 'accepted' || offer.status === 'pending') && (
+                      <div className="pt-1.5 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setOpenChatOfferId(openChatOfferId === offer.id ? null : offer.id)}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            openChatOfferId === offer.id
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-2xs'
+                              : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700 shadow-3xs'
+                          }`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{openChatOfferId === offer.id ? '거래톡 닫기' : '실시간 거래톡 열기'}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {openChatOfferId === offer.id && (
+                      <TradeChatBox
+                        offerId={offer.id}
+                        currentUser={currentUser}
+                        otherPartyName={targetDoc?.sellerName || '판매자 선배님'}
+                        otherPartyDept={targetDoc?.sellerDept || '교내 학과'}
+                      />
                     )}
 
                     {/* Timeout manual Simulator button */}

@@ -4,7 +4,7 @@
  */
 
 import { INITIAL_LISTINGS, INITIAL_OFFERS, INITIAL_ACCOUNTS, INITIAL_NOTIFICATIONS } from './mockData';
-import { Listing, TradeOffer, UniversityAccount, Notification } from './types';
+import { Listing, TradeOffer, UniversityAccount, Notification, TradeChatMessage } from './types';
 
 export function getStoredData<T>(key: string, initialValue: T): T {
   try {
@@ -50,11 +50,12 @@ export class CambagStore {
     try {
       const uids = getLocalAllowedUids();
       const query = uids.length ? `?uids=${uids.join(',')}` : '';
-      const [listingsRes, offersRes, accountsRes, notisRes] = await Promise.all([
+      const [listingsRes, offersRes, accountsRes, notisRes, chatsRes] = await Promise.all([
         fetch('/api/listings').then(res => res.json()),
         fetch('/api/offers').then(res => res.json()),
         fetch(`/api/accounts${query}`).then(res => res.json()),
         fetch('/api/notifications').then(res => res.json()),
+        fetch('/api/chats').then(res => res.json()),
       ]);
 
       if (listingsRes.success && listingsRes.data) {
@@ -69,11 +70,62 @@ export class CambagStore {
       if (notisRes.success && notisRes.data) {
         setStoredData('cambag_notifications', notisRes.data);
       }
+      if (chatsRes.success && chatsRes.data) {
+        setStoredData('cambag_chats', chatsRes.data);
+      }
 
       window.dispatchEvent(new Event('cambag_state_change'));
     } catch (err) {
       console.warn('Failed to sync with backend server, using offline localStorage fallback:', err);
     }
+  }
+
+  static getChats(): TradeChatMessage[] {
+    return getStoredData('cambag_chats', []);
+  }
+
+  static saveChats(chats: TradeChatMessage[]): void {
+    setStoredData('cambag_chats', chats);
+    window.dispatchEvent(new Event('cambag_state_change'));
+  }
+
+  static async sendChatMessage(offerId: string, message: string): Promise<boolean> {
+    const user = this.getCurrentUser();
+    if (user.uid === 'user_guest') return false;
+
+    // 1. Optimistic Update
+    const currentChats = this.getChats();
+    const newChat: TradeChatMessage = {
+      id: `chat_opt_${Date.now()}`,
+      offerId,
+      senderId: user.uid,
+      senderName: user.name,
+      message,
+      timestamp: new Date().toISOString()
+    };
+    this.saveChats([...currentChats, newChat]);
+
+    // 2. Server Replication
+    try {
+      const res = await fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offerId,
+          senderId: user.uid,
+          senderName: user.name,
+          message
+        })
+      });
+      const result = await res.json();
+      if (result.success) {
+        this.syncFromServer();
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to send chat message to server:', err);
+    }
+    return false;
   }
 
   static getListings(): Listing[] {

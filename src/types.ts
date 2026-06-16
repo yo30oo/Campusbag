@@ -76,3 +76,13 @@ export interface UniversityAccount {
   point: number; // 거래 활동 신용 포인트
   password?: string; // 로그인용 비밀번호
 }
+
+export interface TradeChatMessage {
+  id: string;
+  offerId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: string;
+}
+

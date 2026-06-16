@@ -10,12 +10,13 @@ import fs from 'fs';
 
 // In-Memory Database containing initial data
 import { INITIAL_LISTINGS, INITIAL_OFFERS, INITIAL_ACCOUNTS, INITIAL_NOTIFICATIONS } from './src/mockData';
-import { Listing, TradeOffer, UniversityAccount, Notification } from './src/types';
+import { Listing, TradeOffer, UniversityAccount, Notification, TradeChatMessage } from './src/types';
 
 const LISTINGS_FILE = path.join(process.cwd(), 'current_listings.json');
 const OFFERS_FILE = path.join(process.cwd(), 'current_offers.json');
 const ACCOUNTS_FILE = path.join(process.cwd(), 'current_accounts.json');
 const NOTIFICATIONS_FILE = path.join(process.cwd(), 'current_notifications.json');
+const CHATS_FILE = path.join(process.cwd(), 'current_chats.json');
 
 function loadJSON<T>(filePath: string, fallback: T): T {
   try {
@@ -41,6 +42,7 @@ let listings: Listing[] = loadJSON(LISTINGS_FILE, JSON.parse(JSON.stringify(INIT
 let offers: TradeOffer[] = loadJSON(OFFERS_FILE, JSON.parse(JSON.stringify(INITIAL_OFFERS)));
 let accounts: UniversityAccount[] = loadJSON(ACCOUNTS_FILE, JSON.parse(JSON.stringify(INITIAL_ACCOUNTS)));
 let notifications: Notification[] = loadJSON(NOTIFICATIONS_FILE, JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS)));
+let chats: TradeChatMessage[] = loadJSON(CHATS_FILE, []);
 
 const app = express();
 app.use(express.json());
@@ -408,18 +410,65 @@ app.post('/api/notifications/read', (req, res) => {
   res.json({ success: true, notifications });
 });
 
+app.get('/api/chats', (req, res) => {
+  const { offerId } = req.query;
+  if (offerId) {
+    const offerChats = chats.filter(c => c.offerId === offerId);
+    return res.json({ success: true, data: offerChats });
+  }
+  res.json({ success: true, data: chats });
+});
+
+app.post('/api/chats', (req, res) => {
+  const { offerId, senderId, senderName, message } = req.body;
+  if (!offerId || !senderId || !senderName || !message) {
+    return res.status(400).json({ success: false, message: 'Missing fields' });
+  }
+
+  const newChat: TradeChatMessage = {
+    id: `chat_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    offerId,
+    senderId,
+    senderName,
+    message,
+    timestamp: new Date().toISOString()
+  };
+
+  chats.push(newChat);
+  saveJSON(CHATS_FILE, chats);
+
+  // Send a Kakao system alert notification to the other party to let them know they have an unread chat message!
+  const offer = offers.find(o => o.id === offerId);
+  if (offer) {
+    const targetUserId = offer.buyerId === senderId ? (listings.find(l => l.id === offer.listingId)?.sellerId) : offer.buyerId;
+    if (targetUserId) {
+      createNotification(
+        targetUserId,
+        'kakao',
+        `💬 [캠백 거래톡] 새로운 메시지 도착!`,
+        `${senderName} 학우님: "${message.length > 30 ? message.substring(0, 30) + '...' : message}"\n지금 거래톡 창을 열어 공강 시간과 직거래 위치를 조율하세요.`,
+        offer.listingId
+      );
+    }
+  }
+
+  res.json({ success: true, data: newChat, chats });
+});
+
 app.post('/api/reset', (req, res) => {
   listings = JSON.parse(JSON.stringify(INITIAL_LISTINGS));
   offers = JSON.parse(JSON.stringify(INITIAL_OFFERS));
   accounts = JSON.parse(JSON.stringify(INITIAL_ACCOUNTS));
   notifications = JSON.parse(JSON.stringify(INITIAL_NOTIFICATIONS));
+  chats = [];
 
   saveJSON(LISTINGS_FILE, listings);
   saveJSON(OFFERS_FILE, offers);
   saveJSON(ACCOUNTS_FILE, accounts);
   saveJSON(NOTIFICATIONS_FILE, notifications);
+  saveJSON(CHATS_FILE, chats);
 
-  res.json({ success: true, listings, offers, accounts, notifications });
+  res.json({ success: true, listings, offers, accounts, notifications, chats });
 });
 
 // Start server
